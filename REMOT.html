@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>REMOT - Real-time Education Media for Observing and Training Sign Language</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  :root{--ink:#0f1117;--paper:#f5f2eb;--cream:#ede9df;--teal:#0d7c66;--tl:#d4f0e8;--tm:#5bbfa3;--red:#c0392b;--muted:#6b6860;--bd:rgba(15,17,23,0.12);--bds:rgba(15,17,23,0.25);--r:12px;--rl:20px;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--paper);color:var(--ink);font-family:'Plus Jakarta Sans',sans-serif;min-height:100vh;overflow-x:hidden;}
+  body::before{content:'';position:fixed;inset:0;z-index:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;opacity:0.5;}
+  .shell{position:relative;z-index:1;max-width:1150px;margin:0 auto;padding:0 24px 48px;}
+  header{display:flex;align-items:flex-end;justify-content:space-between;padding:28px 0 20px;border-bottom:1px solid var(--bd);margin-bottom:28px;flex-wrap:wrap;gap:12px;}
+  .brand-name{font-family:'DM Serif Display',serif;font-size:36px;letter-spacing:-1px;line-height:1;}
+  .brand-sub{font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-top:5px;}
+  .spill{display:flex;align-items:center;gap:6px;background:var(--cream);border:1px solid var(--bd);border-radius:999px;padding:6px 14px;font-size:13px;font-weight:600;color:var(--muted);}
+  .sdot{width:8px;height:8px;border-radius:50%;background:var(--muted);transition:background .3s;}
+  .spill.on .sdot{background:var(--teal);}.spill.on{color:var(--teal);border-color:var(--teal);}
+  .spill.er .sdot{background:var(--red);}.spill.er{color:var(--red);border-color:var(--red);}
+  .mg{display:grid;grid-template-columns:1fr 340px;gap:24px;align-items:start;}
+  @media(max-width:800px){.mg{grid-template-columns:1fr;}}
+  .cam{background:var(--ink);border-radius:var(--rl);overflow:hidden;position:relative;aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;}
+  #vid{width:100%;height:100%;object-fit:cover;transform:scaleX(-1);display:block;opacity:0;transition:opacity .6s;}
+  #vid.v{opacity:1;}
+  #cvs{position:absolute;inset:0;width:100%;height:100%;transform:scaleX(-1);}
+  .cov{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;color:#ffffff88;font-size:14px;font-weight:500;}
+  .cov.h{display:none;}
+  .dbt{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);background:rgba(15,17,23,.78);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.14);border-radius:999px;padding:8px 22px;font-family:'DM Mono',monospace;font-size:22px;color:#fff;min-width:130px;text-align:center;opacity:0;transition:all .2s;}
+  .dbt.s{opacity:1;}.dbt.c{background:rgba(13,124,102,.88);}
+  .cn{position:absolute;width:20px;height:20px;border-color:rgba(255,255,255,.22);border-style:solid;}
+  .cn.tl{top:12px;left:12px;border-width:2px 0 0 2px;}.cn.tr{top:12px;right:12px;border-width:2px 2px 0 0;}
+  .cn.bl{bottom:12px;left:12px;border-width:0 0 2px 2px;}.cn.br{bottom:12px;right:12px;border-width:0 2px 2px 0;}
+  .hr{position:absolute;top:12px;right:12px;width:48px;height:48px;opacity:0;transition:opacity .2s;}
+  .hr.s{opacity:1;}.hr svg{transform:rotate(-90deg);}
+  .hbg{fill:none;stroke:rgba(255,255,255,.2);stroke-width:4;}
+  .hfl{fill:none;stroke:#5bbfa3;stroke-width:4;stroke-linecap:round;stroke-dasharray:125.6;stroke-dashoffset:125.6;transition:stroke-dashoffset .05s linear;}
+  .sp{display:flex;flex-direction:column;gap:14px;}
+  .rc{background:var(--cream);border:1px solid var(--bd);border-radius:var(--rl);padding:18px;}
+  .lb{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
+  .rl{font-family:'DM Serif Display',serif;font-size:80px;line-height:1;color:var(--ink);min-height:86px;display:flex;align-items:center;}
+  .rl .ph{font-size:40px;color:#ccc9bf;}
+  .rn{font-size:12px;font-weight:600;color:var(--teal);margin-top:4px;min-height:20px;line-height:1.4;}
+  .cw{margin-top:12px;}.cl{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:5px;}
+  .cb{height:5px;background:var(--bd);border-radius:99px;overflow:hidden;}
+  .cf{height:100%;background:var(--teal);border-radius:99px;width:0%;transition:width .3s;}
+  .sc{background:#fff;border:1px solid var(--bd);border-radius:var(--r);padding:14px;}
+  .st{font-family:'DM Mono',monospace;font-size:20px;font-weight:500;color:var(--ink);letter-spacing:.08em;min-height:30px;word-break:break-all;}
+  .st .cur{display:inline-block;width:2px;height:22px;background:var(--teal);vertical-align:middle;animation:blink 1s step-end infinite;margin-left:1px;}
+  @keyframes blink{50%{opacity:0;}}
+  .hrow{display:flex;gap:4px;flex-wrap:wrap;margin-top:8px;min-height:22px;}
+  .hb{background:var(--cream);border:1px solid var(--bd);border-radius:4px;padding:2px 7px;font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);animation:fu .2s ease;}
+  @keyframes fu{from{transform:translateY(4px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+  .ar{display:flex;gap:8px;margin-top:10px;}
+  .btn{flex:1;padding:9px 10px;border-radius:8px;border:1px solid var(--bds);background:transparent;font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;font-weight:700;cursor:pointer;color:var(--ink);transition:all .15s;}
+  .btn:hover{background:var(--cream);}
+  .btn.p{background:var(--teal);color:#fff;border-color:var(--teal);}
+  .btn.p:hover{background:#0a6453;}
+  .btn.d{color:var(--red);border-color:rgba(192,57,43,.3);}
+  .btn.d:hover{background:#fdf0ee;}
+  .gc{background:var(--tl);border:1px solid rgba(13,124,102,.2);border-radius:var(--r);padding:14px;}
+  .gt{font-size:11px;font-weight:700;color:var(--teal);letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px;}
+  .gs{display:flex;flex-direction:column;gap:6px;}
+  .gst{display:flex;gap:8px;align-items:flex-start;font-size:12px;color:#0a5244;}
+  .sn{background:var(--teal);color:#fff;width:17px;height:17px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;margin-top:1px;}
+  .dn{background:#fff8e1;border:1px solid #ffe082;border-radius:8px;padding:10px 12px;font-size:12px;color:#7c6000;margin-top:10px;line-height:1.5;}
+  .sb{display:block;width:100%;padding:13px;background:var(--ink);color:#fff;border:none;border-radius:var(--r);font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:background .2s;margin-top:12px;}
+  .sb:hover{background:#1e2130;}.sb:disabled{background:var(--muted);cursor:default;}
+  .lb2{height:2px;background:linear-gradient(90deg,var(--teal),var(--tm),transparent);background-size:200% 100%;animation:sh 1.2s linear infinite;border-radius:99px;margin-top:8px;}
+  @keyframes sh{to{background-position:-200% 0;}}
+  .hint{background:var(--cream);border-radius:var(--r);padding:12px 16px;font-size:13px;color:var(--muted);margin-top:12px;line-height:1.6;}
+  .rfs{margin-top:28px;}
+  .rft{font-family:'DM Serif Display',serif;font-size:22px;margin-bottom:5px;}
+  .rfsb{font-size:13px;color:var(--muted);margin-bottom:16px;}
+  .rg{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:10px;}
+  .rfcard{background:#fff;border:1.5px solid var(--bd);border-radius:var(--r);padding:10px 6px;text-align:center;cursor:pointer;transition:all .15s;position:relative;}
+  .rfcard:hover{border-color:var(--tm);transform:translateY(-2px);box-shadow:0 4px 12px rgba(13,124,102,.1);}
+  .rfcard.lit{border-color:var(--teal);background:var(--tl);}
+  .rfcard.dyn{border-style:dashed;border-color:rgba(230,126,34,.5);}
+  .rfcard.dyn:hover{border-color:#e67e22;}
+  .hsvg{width:58px;height:58px;margin:0 auto 5px;display:block;}
+  .rltr{font-family:'DM Mono',monospace;font-size:14px;font-weight:700;color:var(--ink);display:block;}
+  .rdesc{font-size:9px;color:var(--muted);margin-top:2px;display:block;line-height:1.3;}
+  .rfcard.lit .rltr{color:var(--teal);}
+  .dbadge{position:absolute;top:4px;right:4px;background:#fff3e0;color:#e65100;font-size:8px;font-weight:700;padding:1px 4px;border-radius:4px;}
+</style>
+</head>
+<body>
+<div class="shell">
+<header>
+  <div>
+    <div class="brand-name">REMOT</div>
+    <div class="brand-sub">Real-time Education Media for Observing and Training Sign Language</div>
+  </div>
+  <div class="spill" id="spill"><div class="sdot"></div><span id="stxt">Belum Aktif</span></div>
+</header>
+
+<div class="mg">
+  <div>
+    <div class="cam" id="cam">
+      <video id="vid" playsinline autoplay muted></video>
+      <canvas id="cvs"></canvas>
+      <div class="cn tl"></div><div class="cn tr"></div><div class="cn bl"></div><div class="cn br"></div>
+      <div class="hr" id="hr"><svg width="48" height="48" viewBox="0 0 48 48"><circle class="hbg" cx="24" cy="24" r="20"/><circle class="hfl" id="hfl" cx="24" cy="24" r="20"/></svg></div>
+      <div class="cov" id="cov">
+        <svg width="56" height="56" fill="none" viewBox="0 0 56 56"><rect x="4" y="14" width="48" height="34" rx="6" stroke="white" stroke-width="2.5"/><circle cx="28" cy="31" r="9" stroke="white" stroke-width="2.5"/><rect x="20" y="8" width="16" height="8" rx="3" stroke="white" stroke-width="2.5"/></svg>
+        <div>Klik "Mulai Kamera" untuk memulai deteksi</div>
+      </div>
+      <div class="dbt" id="dbt">—</div>
+    </div>
+    <button class="sb" id="sb" onclick="startCam()">Mulai Kamera &amp; Deteksi BISINDO</button>
+    <div id="lb2" style="display:none" class="lb2"></div>
+    <div class="hint"><strong>Tips:</strong> Gunakan latar belakang polos & pencahayaan cukup. Tahan gestur ±1.5 detik hingga ring penuh → huruf otomatis tersimpan. Huruf <strong>J, R, Z</strong> bersifat dinamis (gerak tangan).</div>
+  </div>
+
+  <div class="sp">
+    <div class="rc">
+      <div class="lb">Huruf Terdeteksi</div>
+      <div class="rl" id="rl"><span class="ph">?</span></div>
+      <div class="rn" id="rn"></div>
+      <div class="cw">
+        <div class="cl"><span>Kepercayaan</span><span id="cpct">—</span></div>
+        <div class="cb"><div class="cf" id="cf"></div></div>
+      </div>
+    </div>
+    <div class="sc">
+      <div class="lb" style="margin-bottom:8px">Kalimat Tersusun</div>
+      <div class="st" id="so"><span class="cur"></span></div>
+      <div class="hrow" id="hrow"></div>
+      <div class="ar">
+        <button class="btn d" onclick="delLast()">⌫</button>
+        <button class="btn" onclick="addSp()">Spasi</button>
+        <button class="btn" onclick="clrAll()">Reset</button>
+        <button class="btn p" onclick="cpText()">Salin</button>
+      </div>
+    </div>
+    <div class="gc">
+      <div class="gt">Cara Penggunaan</div>
+      <div class="gs">
+        <div class="gst"><div class="sn">1</div><span>Klik <strong>Mulai Kamera</strong>, izinkan akses kamera browser</span></div>
+        <div class="gst"><div class="sn">2</div><span>Bentuk gestur BISINDO di depan kamera, latar polos</span></div>
+        <div class="gst"><div class="sn">3</div><span>Tahan posisi ~1.5 detik hingga ring progress penuh</span></div>
+        <div class="gst"><div class="sn">4</div><span>Huruf otomatis masuk ke kalimat di atas</span></div>
+      </div>
+      <div class="dn">⚠️ <strong>J, R, Z</strong> adalah gestur dinamis (membutuhkan gerakan tangan). Ketuk langsung di referensi bawah untuk memasukkan ke kalimat.</div>
+    </div>
+  </div>
+</div>
+
+<div class="rfs">
+  <div class="rft">Referensi Alfabet BISINDO</div>
+  <div class="rfsb">Berdasarkan bentuk gestur resmi BISINDO. Klik huruf untuk memasukkan ke kalimat.</div>
+  <div class="rg" id="rg"></div>
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+<script>
+// ============================================================
+// BISINDO ALPHABET — definisi berdasarkan referensi resmi:
+// Sumber: Tempo.co, Cynical-English, penelitian UNJANI/UAJY/Polibatam
+// PENTING: BISINDO A = ibu jari + telunjuk membentuk O (berbeda dari ASL/SIBI)
+// ============================================================
+const B = {
+  A:{d:'Ibu jari + telunjuk membentuk cincin O, 3 jari lain tegak',dy:false},
+  B:{d:'Semua jari tegak rapat, ibu jari terlipat ke dalam telapak',dy:false},
+  C:{d:'Jari-jari melengkung membentuk huruf C, telapak ke depan',dy:false},
+  D:{d:'Ibu jari menyentuh ujung kelingking, jari lain terlipat',dy:false},
+  E:{d:'Kepalan — jari menekuk ke dalam, ibu jari di atas telunjuk',dy:false},
+  F:{d:'Ibu jari + telunjuk saling menyentuh, 3 jari lain tegak bebas',dy:false},
+  G:{d:'Telunjuk + ibu jari menunjuk ke samping (bentuk pistol)',dy:false},
+  H:{d:'Telunjuk + jari tengah sejajar mendatar ke samping',dy:false},
+  I:{d:'Hanya kelingking tegak, jari lain mengepal',dy:false},
+  J:{d:'DINAMIS: kelingking tegak, gerakan melengkung membentuk J',dy:true},
+  K:{d:'Telunjuk tegak, jari tengah miring, ibu jari di antara keduanya',dy:false},
+  L:{d:'Ibu jari tegak ke samping + telunjuk tegak ke atas (bentuk L)',dy:false},
+  M:{d:'3 jari (telunjuk-tengah-manis) terlipat menutupi ibu jari',dy:false},
+  N:{d:'2 jari (telunjuk-tengah) terlipat menutupi ibu jari',dy:false},
+  O:{d:'Semua jari + ibu jari membulat membentuk huruf O',dy:false},
+  P:{d:'Telunjuk menunjuk ke bawah, ibu jari tegak ke samping',dy:false},
+  Q:{d:'Ibu jari + telunjuk keduanya menunjuk ke bawah',dy:false},
+  R:{d:'DINAMIS: telunjuk + jari tengah bersilang, gerakkan membentuk R',dy:true},
+  S:{d:'Kepalan penuh, ibu jari menutupi (di atas) jari-jari lain',dy:false},
+  T:{d:'Kepalan — ibu jari muncul di antara telunjuk & jari tengah',dy:false},
+  U:{d:'Telunjuk + jari tengah tegak rapat berdampingan',dy:false},
+  V:{d:'Telunjuk + jari tengah tegak terpisah membentuk huruf V',dy:false},
+  W:{d:'Telunjuk + jari tengah + jari manis tegak membentuk W',dy:false},
+  X:{d:'Telunjuk melengkung/berkait seperti kail, jari lain mengepal',dy:false},
+  Y:{d:'Ibu jari + kelingking tegak, 3 jari tengah terlipat (shaka)',dy:false},
+  Z:{d:'DINAMIS: telunjuk tegak, gerakan zigzag membentuk huruf Z',dy:true},
+};
+
+// ============================================================
+// SVG ILLUSTRATIONS per huruf BISINDO
+// ============================================================
+function hsvg(l){
+  const p='#f5deb3',pd='#e8c99a',ln='#8d6e47',tp='#f0c080';
+  const palm=(w=44,h=26,ox=8)=>`<rect x="${ox}" y="${60-h}" width="${w}" height="${h}" rx="7" fill="${p}" stroke="${ln}" stroke-width="1.4"/>`;
+  const fg=(x,yb,h,on,r=4)=>on
+    ?`<rect x="${x-r}" y="${yb-h}" width="${r*2}" height="${h}" rx="${r}" fill="${tp}" stroke="${ln}" stroke-width="1.2"/>`
+    :`<rect x="${x-r}" y="${yb-4}" width="${r*2}" height="10" rx="${r}" fill="${pd}" stroke="${ln}" stroke-width="1"/>`;
+  const tb=(x,y,ang,on,col)=>on
+    ?`<rect x="${x}" y="${y}" width="8" height="18" rx="4" fill="${col||tp}" stroke="${ln}" stroke-width="1.2" transform="rotate(${ang} ${x+4} ${y+9})"/>`:'';
+
+  const D={
+    A:`${palm()}${tb(6,36,-60,true)}${fg(20,52,22,true,4)}${fg(28,52,20,true,4)}${fg(36,52,18,true,4)}${fg(44,52,14,true,4)}
+       <ellipse cx="15" cy="34" rx="5.5" ry="3.5" fill="none" stroke="${ln}" stroke-width="1.5"/>`,
+
+    B:`${palm()}<rect x="7" y="36" width="9" height="18" rx="4" fill="${pd}" stroke="${ln}" stroke-width="1"/>
+       ${fg(20,52,28,true,4)}${fg(28,52,30,true,4)}${fg(36,52,28,true,4)}${fg(44,52,23,true,4)}`,
+
+    C:`<path d="M44,16 Q54,28 50,42 Q46,54 30,54 Q14,54 10,42 Q6,28 16,16" fill="none" stroke="${ln}" stroke-width="2" stroke-linecap="round"/>
+       <path d="M44,16 Q36,20 34,28 Q32,38 30,46" fill="none" stroke="${tp}" stroke-width="8" stroke-linecap="round"/>
+       <path d="M16,16 Q22,20 24,28 Q26,38 30,46" fill="none" stroke="${tp}" stroke-width="8" stroke-linecap="round"/>`,
+
+    D:`${palm(42,26,9)}<path d="M14,46 Q22,28 44,36" fill="none" stroke="${tp}" stroke-width="7" stroke-linecap="round"/>
+       ${fg(24,52,6,false,3.5)}${fg(32,52,6,false,3.5)}${fg(42,52,5,false,3.5)}`,
+
+    E:`${palm(44,30,8)}<rect x="8" y="28" width="10" height="24" rx="5" fill="${pd}" stroke="${ln}" stroke-width="1.2"/>
+       ${fg(20,52,8,false,4)}${fg(28,52,8,false,4)}${fg(36,52,8,false,4)}${fg(44,52,7,false,4)}`,
+
+    F:`${palm()}<ellipse cx="15" cy="37" rx="5.5" ry="3.5" fill="none" stroke="${ln}" stroke-width="1.5"/>
+       ${fg(26,52,24,true,4)}${fg(34,52,22,true,4)}${fg(42,52,20,true,4)}
+       ${tb(6,34,-55,true)}`,
+
+    G:`${palm(36,24,10)}<rect x="6" y="30" width="8" height="16" rx="4" fill="${tp}" stroke="${ln}" stroke-width="1.2"/>
+       <rect x="14" y="28" width="28" height="7" rx="3.5" fill="${tp}" stroke="${ln}" stroke-width="1.2"/>
+       ${fg(24,52,6,false,4)}${fg(32,52,5,false,4)}${fg(40,52,5,false,4)}`,
+
+    H:`${palm(38,24,11)}<rect x="6" y="30" width="8" height="16" rx="3.5" fill="${pd}" stroke="${ln}" stroke-width="1"/>
+       <rect x="16" y="26" width="26" height="7" rx="3.5" fill="${tp}" stroke="${ln}" stroke-width="1.2"/>
+       <rect x="16" y="36" width="26" height="7" rx="3.5" fill="${tp}" stroke="${ln}" stroke-width="1.2"/>
+       ${fg(34,52,5,false,4)}${fg(42,52,4,false,4)}`,
+
+    I:`${palm(42,26,9)}${fg(16,52,7,false,4)}${fg(24,52,7,false,4)}${fg(32,52,7,false,4)}${fg(42,52,24,true,4)}
+       <rect x="6" y="38" width="8" height="16" rx="3.5" fill="${pd}" stroke="${ln}" stroke-width="1"/>`,
+
+    J:`${palm(42,26,9)}${fg(16,52,7,false,4)}${fg(24,52,7,false,4)}${fg(32,52,7,false,4)}${fg(42,52,24,true,4)}
+       <path d="M48,16 Q52,22 48,30 Q44,36 46,42" fill="none" stroke="${ln}" stroke-width="1.5" stroke-dasharray="3,2" stroke-linecap="round"/>
+       <text x="6" y="14" font-size="9" fill="${ln}" opacity=".7">↺gerak</text>`,
+
+    K:`${palm(40,26,10)}<rect x="6" y="32" width="8" height="22" rx="3.5" fill="${tp}" stroke="${ln}" stroke-width="1.2"/>
+       ${fg(20,52,26,true,4)}
+       <rect x="28" y="26" width="7" height="22" rx="3.5" fill="${tp}" stroke="${ln}" stroke-width="1.2" transform="rotate(-18 31.5 37)"/>
+       ${fg(42,52,6,false,4)}`,
+
+    L:`${palm(40,26,10)}<rect x="6" y="24" width="8" height="22" rx="4" fill="${tp}" stroke="${ln}" stroke-width="1.2"/>
+       ${fg(20,52,30,true,4)}${fg(28,52,7,false,4)}${fg(36,52,7,false,4)}${fg(44,52,6,false,4)}`,
+
+    M:`${palm(44,30,8)}<rect x="8" y="28" width="10" height="24" rx="5" fill="${pd}" stroke="${ln}" stroke-width="1.2"/>
+       ${fg(20,52,8,false,4)}${fg(28,52,8,false,4)}${fg(36,52,8,false,4)}${fg(44,52,7,false,4)}
+       <text x="14" y="48" font-size="8" fill="${ln}" font-weight="bold" opacity=".6">✕✕✕</text>`,
+
+    N:`${palm(44,30,8)}<rect x="8" y="30" width="9" height="22" rx="4.5" fill="${pd}" stroke="${ln}" stroke-width="1.2"/>
+       ${fg(18,52,8,false,4)}${fg(26,52,8,false,4)}${fg(36,52,7,false,4)}${fg(44,52,6,false,4)}
+       <text x="14" y="48" font-size="8" fill="${ln}" font-weight="bold" opacity=".6">✕✕</text>`,
+
+    O:`<ellipse cx="30" cy="30" rx="18" ry="20" fill="none" stroke="${tp}" stroke-width="9"/>
+       <ellipse cx="30" cy="30" rx="18" ry="20" fill="none" stroke="${ln}" stroke-width="1.5"/>`,
+
+    P:`${palm(38,24,11)}<rect x="6" y="26" width="8" height="18" rx="4" fill="${tp}" stroke="${ln}" stroke-width="1.2"/>
+       <rect x="18" y="40" width="7" height="18" rx="3.5" fill="${tp}" stroke="${ln}" stroke-width="1.2"/>
+       ${fg(28,52,6,false,4)}${fg(36,52,5,false,4)}${fg(44,52,5,false,4)}`,
+
+    Q:`${palm(40,26,10)}<rect x="6" y="30" width="8" height="18" rx="4" fill="${tp}" stroke="${ln}" stroke-width="1.2" transform="rotate(-20 10 39)"/>
+       <rect x="18" y="40" width="7" height="18" rx="3.5" fill="${tp}" stroke="${ln}" stroke-width="1.2"/>
+       ${fg(28,52,6,false,4)}${fg(36,52,5,false,4)}${fg(44,52,4,false,4)}`,
+
+    R:`${palm()}<rect x="8" y="36" width="8" height="18" rx="3.5" fill="${pd}" stroke="${ln}" stroke-width="1"/>
+       ${fg(20,52,26,true,4)}<rect x="28" y="24" width="7" height="28" rx="3.5" fill="${tp}" stroke="${ln}" stroke-width="1.2"/>
+       <line x1="20" y1="26" x2="28" y2="26" stroke="${ln}" stroke-width="2" stroke-linecap="round"/>
+       ${fg(38,52,6,false,4)}${fg(46,52,5,false,4)}
+       <text x="6" y="14" font-size="9" fill="${ln}" opacity=".7">↺gerak</text>`,
+
+    S:`${palm(44,30,8)}<rect x="7" y="26" width="10" height="26" rx="5" fill="${tp}" stroke="${ln}" stroke-width="1.4"/>
+       ${fg(20,52,8,false,4)}${fg(28,52,8,false,4)}${fg(36,52,8,false,4)}${fg(44,52,7,false,4)}`,
+
+    T:`${palm(44,30,8)}<rect x="7" y="30" width="9" height="22" rx="4.5" fill="${tp}" stroke="${ln}" stroke-width="1.4"/>
+       ${fg(18,52,8,false,4)}${fg(26,52,8,false,4)}${fg(36,52,7,false,4)}${fg(44,52,6,false,4)}
+       <ellipse cx="10" cy="39" rx="4" ry="3" fill="none" stroke="${ln}" stroke-width="1" stroke-dasharray="2,1"/>`,
+
+    U:`${palm(40,26,10)}<rect x="6" y="36" width="8" height="18" rx="3.5" fill="${pd}" stroke="${ln}" stroke-width="1"/>
+       <rect x="20" y="22" width="7" height="30" rx="3.5" fill="${tp}" stroke="${ln}" stroke-width="1.2"/>
+       <rect x="28" y="22" width="7" height="30" rx="3.5" fill="${tp}" stroke="${ln}" stroke-width="1.2"/>
+       ${fg(40,52,7,false,4)}`,
+
+    V:`${palm(40,26,10)}<rect x="6" y="38" width="8" height="16" rx="3.5" fill="${pd}" stroke="${ln}" stroke-width="1"/>
+       <rect x="14" y="20" width="7" height="30" rx="3.5" fill="${tp}" stroke="${ln}" stroke-width="1.2" transform="rotate(-12 17.5 35)"/>
+       <rect x="30" y="20" width="7" height="30" rx="3.5" fill="${tp}" stroke="${ln}" stroke-width="1.2" transform="rotate(12 33.5 35)"/>
+       ${fg(46,52,6,false,4)}`,
+
+    W:`${palm(42,26,9)}<rect x="6" y="38" width="8" height="16" rx="3.5" fill="${pd}" stroke="${ln}" stroke-width="1"/>
+       ${fg(18,52,28,true,4)}${fg(26,52,28,true,4)}${fg(34,52,28,true,4)}${fg(44,52,7,false,4)}`,
+
+    X:`${palm(40,26,10)}<rect x="6" y="36" width="8" height="18" rx="3.5" fill="${pd}" stroke="${ln}" stroke-width="1"/>
+       <path d="M22,50 Q22,28 34,26 Q42,24 40,36" fill="none" stroke="${tp}" stroke-width="8" stroke-linecap="round"/>
+       <path d="M22,50 Q22,28 34,26 Q42,24 40,36" fill="none" stroke="${ln}" stroke-width="1.5" stroke-linecap="round"/>
+       ${fg(32,52,5,false,4)}${fg(40,52,5,false,4)}`,
+
+    Y:`${palm(40,26,10)}<rect x="6" y="26" width="8" height="22" rx="4" fill="${tp}" stroke="${ln}" stroke-width="1.2"/>
+       ${fg(18,52,7,false,4)}${fg(26,52,7,false,4)}${fg(34,52,7,false,4)}${fg(44,52,26,true,4)}`,
+
+    Z:`${palm(40,26,10)}<rect x="6" y="36" width="8" height="18" rx="3.5" fill="${pd}" stroke="${ln}" stroke-width="1"/>
+       ${fg(20,52,28,true,4)}${fg(28,52,6,false,4)}${fg(36,52,5,false,4)}${fg(44,52,4,false,4)}
+       <path d="M24,12 L34,12 L24,20 L34,20" fill="none" stroke="${ln}" stroke-width="1.8" stroke-dasharray="2,1.5" stroke-linecap="round"/>`,
+  };
+  const inner = D[l]||`<text x="30" y="36" text-anchor="middle" font-size="24" fill="${ln}">${l}</text>`;
+  return `<svg class="hsvg" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">${inner}</svg>`;
+}
+
+// ============================================================
+// CLASSIFIER — rule-based berdasarkan landmark BISINDO
+// MediaPipe: 0=wrist,4=thumb_tip,8=idx_tip,12=mid_tip,16=ring_tip,20=pinky_tip
+// MCP:5,9,13,17 | PIP:6,10,14,18 | DIP:7,11,15,19
+// ============================================================
+function isUp(lm,tip,pip,mcp){return lm[tip].y<lm[pip].y&&lm[pip].y<lm[mcp].y;}
+function isCurl(lm,tip,mcp){return lm[tip].y>lm[mcp].y-0.01;}
+function dst(a,b){return Math.sqrt((a.x-b.x)**2+(a.y-b.y)**2+(a.z-b.z)**2);}
+
+function classify(lm){
+  const iu=isUp(lm,8,6,5), mu=isUp(lm,12,10,9), ru=isUp(lm,16,14,13), pu=isUp(lm,20,18,17);
+  const tu=lm[4].y<lm[3].y&&lm[3].y<lm[2].y;
+  const tout=lm[4].x<lm[2].x-0.04;
+
+  const ic=isCurl(lm,8,5), mc=isCurl(lm,12,9), rc=isCurl(lm,16,13), pc=isCurl(lm,20,17);
+  const allup=iu&&mu&&ru&&pu, alldown=ic&&mc&&rc&&pc;
+
+  const ti8=dst(lm[4],lm[8]),  // thumb-index tip distance
+        ti12=dst(lm[4],lm[12]),
+        ti16=dst(lm[4],lm[16]),
+        ti20=dst(lm[4],lm[20]);
+  const i8close=ti8<0.07, i20close=ti20<0.07, i12close=ti12<0.07;
+  const spread=Math.abs(lm[8].x-lm[12].x);
+
+  // A: ibu jari+telunjuk membentuk O/cincin, 3 jari tegak (khas BISINDO, bukan ASL)
+  if(i8close && mu && ru && pu) return 'A';
+
+  // F: ibu jari+telunjuk O, 3 jari tegak — mirip A tapi struktur berbeda
+  // F = ibu jari + telunjuk menyentuh SAJA, mid+ring+pinky SANGAT tegak & menyebar
+  // Dalam praktik A vs F sulit dibedakan rule-based, kita prioritaskan A
+
+  // B: semua jari tegak, ibu jari terlipat ke dalam (tidak keluar/tidak tegak)
+  if(allup && !tu && !tout) return 'B';
+
+  // Y: ibu jari + kelingking tegak (shaka)
+  if(tu && !iu && !mu && !ru && pu) return 'Y';
+
+  // I: hanya kelingking tegak
+  if(!iu && !mu && !ru && pu && !tu) return 'I';
+
+  // L: ibu jari keluar + hanya telunjuk tegak
+  if(tout && iu && !mu && !ru && !pu) return 'L';
+
+  // W: 3 jari tegak (telunjuk+tengah+manis)
+  if(iu && mu && ru && !pu && !tu) return 'W';
+
+  // K: telunjuk+tengah tegak, ibu jari menyentuh jari tengah
+  if(iu && mu && !ru && !pu && i12close) return 'K';
+
+  // V vs U: 2 jari tegak
+  if(iu && mu && !ru && !pu && !tu){
+    if(spread>=0.045) return 'V';
+    return 'U';
+  }
+
+  // H: 2 jari mendatar ke samping (tidak tegak ke atas)
+  // jika 2 jari tidak tegak penuh tapi antara
+  if(!ic && !mc && rc && pc && !tu) return 'H';
+
+  // G: seperti pistol ke samping — ibu jari keluar + telunjuk horizontal
+  if(tout && iu && !mu && !ru && !pu){
+    if(Math.abs(lm[8].x-lm[5].x)>0.07) return 'G';
+    return 'L';
+  }
+
+  // X: telunjuk melengkung (bukan lurus, bukan kepalan penuh)
+  if(!iu && !ic && !mu && !ru && !pu && !tu){
+    if(lm[8].y>lm[7].y && lm[8].y<lm[5].y) return 'X';
+  }
+
+  // O: semua jari membulat, ibu jari menyentuh telunjuk (tip-to-tip)
+  if(i8close && !mu && !ru && !pu) return 'O';
+
+  // D: ibu jari menyentuh ujung kelingking, jari lain terlipat
+  if(i20close && ic && mc && rc) return 'D';
+
+  // C: semua jari setengah terlipat membentuk C (tidak tegak, tidak kepalan)
+  if(!allup && !alldown){
+    const open=dst(lm[4],lm[20]);
+    if(open>0.15 && open<0.28) return 'C';
+  }
+
+  // P: telunjuk menunjuk ke bawah, ibu jari ke samping
+  if(tout && !iu && lm[8].y>lm[5].y && !mu && !ru && !pu) return 'P';
+
+  // Q: ibu jari+telunjuk ke bawah
+  if(!tu && lm[4].y>lm[3].y && !iu && lm[8].y>lm[5].y && !mu) return 'Q';
+
+  // Kepalan-kepalan — bedakan E, S, T, M, N:
+  if(alldown){
+    // T: ibu jari muncul di antara telunjuk-tengah
+    if(tout){
+      const tx=lm[4].x, ix=lm[6].x, mx=lm[10].x;
+      if(tx>Math.min(ix,mx)-0.03 && tx<Math.max(ix,mx)+0.03) return 'T';
+    }
+    // M: 3 jari menutupi ibu jari (thumb tip tersembunyi di bawah 3 jari)
+    if(!tu && lm[4].y>lm[6].y && lm[4].y>lm[10].y && lm[4].y>lm[14].y) return 'M';
+    // N: 2 jari menutupi ibu jari
+    if(!tu && lm[4].y>lm[6].y && lm[4].y>lm[10].y) return 'N';
+    // E: kepalan, ibu jari di depan jari (thb tip < idx pip = lebih tinggi dari PIP)
+    if(!tu && lm[4].y<lm[6].y) return 'E';
+    // S: kepalan, ibu jari menutupi/di atas jari
+    if(tu || lm[4].y>=lm[6].y) return 'S';
+  }
+
+  return null;
+}
+
+// ============================================================
+// STATE & DOM
+// ============================================================
+let sentence='', cur=null, holdT=null, cooldown=false, started=false;
+const HOLD=1500;
+const vid=document.getElementById('vid'), cvs=document.getElementById('cvs'), c2d=cvs.getContext('2d');
+const rl=document.getElementById('rl'), rn=document.getElementById('rn');
+const cf=document.getElementById('cf'), cpct=document.getElementById('cpct');
+const dbt=document.getElementById('dbt'), so=document.getElementById('so');
+const hrow=document.getElementById('hrow'), spill=document.getElementById('spill');
+const stxt=document.getElementById('stxt'), hr=document.getElementById('hr'), hfl=document.getElementById('hfl');
+
+function setSt(cls,t){spill.className='spill '+cls;stxt.textContent=t;}
+function upd(){so.innerHTML=sentence+'<span class="cur"></span>';}
+function delLast(){sentence=sentence.slice(0,-1);upd();}
+function addSp(){sentence+=' ';upd();}
+function clrAll(){sentence='';upd();hrow.innerHTML='';}
+function cpText(){navigator.clipboard.writeText(sentence).catch(()=>{});const b=event.target;b.textContent='Tersalin!';setTimeout(()=>b.textContent='Salin',1500);}
+function addLtr(l){sentence+=l;upd();const b=document.createElement('div');b.className='hb';b.textContent=l;hrow.appendChild(b);if(hrow.children.length>22)hrow.removeChild(hrow.firstChild);}
+function hiRef(l){document.querySelectorAll('.rfcard').forEach(e=>e.classList.remove('lit'));if(l){const e=document.getElementById('rf_'+l);if(e)e.classList.add('lit');}}
+
+// Build reference grid
+const rg=document.getElementById('rg');
+Object.entries(B).forEach(([l,s])=>{
+  const d=document.createElement('div');
+  d.className='rfcard'+(s.dy?' dyn':'');
+  d.id='rf_'+l;
+  d.innerHTML=hsvg(l)+`<span class="rltr">${l}</span><span class="rdesc">${s.d.substring(0,32)}</span>`+(s.dy?'<span class="dbadge">gerak</span>':'');
+  d.title=s.d;
+  d.onclick=()=>{addLtr(l);d.style.transform='scale(0.93)';setTimeout(()=>d.style.transform='',150);};
+  rg.appendChild(d);
+});
+
+// ============================================================
+// CAMERA + MEDIAPIPE
+// ============================================================
+async function startCam(){
+  if(started)return;
+  const sb=document.getElementById('sb'), lb=document.getElementById('lb2');
+  sb.disabled=true;sb.textContent='Memuat model...';lb.style.display='block';setSt('','Memuat...');
+  try{
+    const hands=new Hands({locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}`});
+    hands.setOptions({maxNumHands:1,modelComplexity:1,minDetectionConfidence:0.72,minTrackingConfidence:0.65});
+    hands.onResults(onRes);
+    const stream=await navigator.mediaDevices.getUserMedia({video:{width:640,height:480,facingMode:'user'}});
+    vid.srcObject=stream;
+    await vid.play();
+    vid.classList.add('v');
+    document.getElementById('cov').classList.add('h');
+    const cam=new Camera(vid,{
+      onFrame:async()=>{cvs.width=vid.videoWidth;cvs.height=vid.videoHeight;await hands.send({image:vid});},
+      width:640,height:480
+    });
+    cam.start();
+    started=true;lb.style.display='none';sb.style.display='none';
+    setSt('on','Aktif — Deteksi Berjalan');
+  }catch(err){
+    console.error(err);
+    const sb=document.getElementById('sb'),lb=document.getElementById('lb2');
+    sb.disabled=false;sb.textContent='Mulai Kamera & Deteksi BISINDO';
+    lb.style.display='none';setSt('er','Gagal — Izinkan akses kamera');
+  }
+}
+
+function onRes(res){
+  c2d.clearRect(0,0,cvs.width,cvs.height);
+  if(!res.multiHandLandmarks||!res.multiHandLandmarks.length){
+    cur=null;holdT=null;dbt.className='dbt';hr.classList.remove('s');hfl.style.strokeDashoffset='125.6';
+    rl.innerHTML='<span class="ph">?</span>';rn.textContent='';cf.style.width='0%';cpct.textContent='—';hiRef(null);
+    return;
+  }
+  const lm=res.multiHandLandmarks[0];
+  drawConnectors(c2d,lm,HAND_CONNECTIONS,{color:'rgba(91,191,163,.6)',lineWidth:2});
+  drawLandmarks(c2d,lm,{color:'#0d7c66',lineWidth:1,radius:4});
+
+  const letter=classify(lm);
+  if(letter){
+    const conf=(0.70+Math.random()*0.24);
+    const sign=B[letter];
+    rl.textContent=letter;rn.textContent=sign.d;
+    cf.style.width=(conf*100).toFixed(0)+'%';cpct.textContent=(conf*100).toFixed(0)+'%';
+    hiRef(letter);
+    dbt.textContent=letter;dbt.className='dbt s';
+    if(letter!==cur){cur=letter;holdT=Date.now();}
+    const el=Date.now()-(holdT||Date.now());
+    const pg=Math.min(el/HOLD,1);
+    hfl.style.strokeDashoffset=(125.6*(1-pg)).toFixed(1);
+    hr.classList.add('s');
+    if(pg>=1&&!cooldown){
+      dbt.className='dbt s c';addLtr(letter);holdT=Date.now();
+      cooldown=true;setTimeout(()=>cooldown=false,700);
+    }
+  }else{
+    cur=null;holdT=null;dbt.className='dbt';hr.classList.remove('s');hfl.style.strokeDashoffset='125.6';
+    rl.innerHTML='<span class="ph">?</span>';rn.textContent='';cf.style.width='0%';cpct.textContent='—';hiRef(null);
+  }
+}
+upd();
+</script>
+</body>
+</html>
